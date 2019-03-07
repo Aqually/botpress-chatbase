@@ -33,7 +33,7 @@ module.exports = {
 
     async function incomingMiddleware(event, next) {
 
-      if (event.type != "text" && event.type != 'message' && event.type != 'postback') {
+      if (event.type != "text") {
         next();
         return;
       }
@@ -93,7 +93,7 @@ module.exports = {
 
 
     async function outgoingMiddleware(event, next) {
-      if (event.type != "text" && event.type != 'message' && event.type != 'postback') {
+      if (event.type != "text") {
         next();
         return;
       }
