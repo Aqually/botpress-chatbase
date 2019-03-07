@@ -33,7 +33,9 @@ module.exports = {
 
     async function incomingMiddleware(event, next) {
 
-      if (event.type != "text") {
+      const validEventType = ['message', 'text', 'quick_reply', 'postback'];
+
+      if ( !validEventType.includes(event.type)) {
         next();
         return;
       }
@@ -57,23 +59,15 @@ module.exports = {
       if (event.nlu) {
         intent = event.nlu.intent.name;
         confidence = event.nlu.intent.confidence
+        qnaConfidence = event.qnaMakerConfidence
       }
 
-      // event.chatbaseEvent should be set by the previous middleware in the chain
-      if (event.chatbaseEvent) {
-        var chatbaseEvent = event.chatbaseEvent;
-        if (chatbaseEvent.isHandled) {
-          newMsg.setAsHandled();
-        } else {
-          newMsg.setAsNotHandled();
-        }
+      if (notHandledIntents.includes(intent) || confidence < 0.7 || qnaConfidence > 0.7) {
+        newMsg.setAsNotHandled();
       } else {
-        if (notHandledIntents.includes(intent) || confidence < 0.7 ) {
-          newMsg.setAsNotHandled();
-        } else {
-          newMsg.setAsHandled();
-        }
+        newMsg.setAsHandled();
       }
+      
       newMsg
         .setAsTypeUser()
         .setTimestamp(Date.now().toString())
@@ -85,15 +79,12 @@ module.exports = {
         .catch(err => event.bp.logger.error(err));
 
 
-      if (event.chatbaseEvent && !event.chatbaseEvent.swallow) {
-        next();
-      }
-
+      next();
     }
 
 
     async function outgoingMiddleware(event, next) {
-      if (event.type != "text") {
+      if (event.type != "message" || event.type != "text") {
         next();
         return;
       }
